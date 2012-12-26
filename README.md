@@ -1,10 +1,11 @@
-BSPyeast
+BSPMCL
 ========
 
-Markov Cluster Algorithm (MCL) for Protein-protein interaction network in budding yeast.
+Markov Cluster Algorithm (MCL) for networks.
 
 Reference
 ---------
 
-* [Pajek data: yeasts](http://vlado.fmf.uni-lj.si/pub/networks/data/bio/Yeast/Yeast.htm)
+* [Complex Networks data sets](http://math.nist.gov/~RPozo/complex_datasets.html)
+* [Pajek datasets](http://vlado.fmf.uni-lj.si/pub/networks/data/default.htm)
 * [Clustering on Graphs: The Markov Cluster Algorithm (MCL)](https://www.cs.ucsb.edu/~xyan/classes/CS595D-2009winter/MCL_Presentation2.pdf)
