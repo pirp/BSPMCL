@@ -1,2 +1,2 @@
 all:
-	gcc -o bsp_yeast bsp_yeast.c
+	gcc -o bsp_mcl bsp_mcl.c
