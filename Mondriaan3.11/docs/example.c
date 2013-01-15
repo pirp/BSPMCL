@@ -3,7 +3,7 @@ This is a small example program which illustrates interfacing with the Mondriaan
 
 It can be compiled using:
 
-gcc bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+gcc example.c -I../src/include -L../src/lib -lMondriaan3 -lm
 
 */
 
@@ -18,8 +18,8 @@ int main(int argc, char **argv)
 	struct opts Options;
 	/* This file pointer will be the opened Matrix Market file. */
 	FILE *File;
-	/* This structure will contain the testMatrix matrix. */
-	struct sparsematrix testMatrix;
+	/* This structure will contain the arc130 matrix. */
+	struct sparsematrix Arc130;
 	/* Variables used for calculating the communication volume. */
 	long ComVolumeRow, ComVolumeCol, Dummy;
 	/* Variables used to calculate the imbalance. */
@@ -39,17 +39,17 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	/* Open the testMatrix matrix file. */
-	if (!(File = fopen("test_matrix.mtx", "r")))
+	/* Open the arc130 matrix file. */
+	if (!(File = fopen("../tests/arc130.mtx", "r")))
 	{
-		printf("Unable to open test_matrix!\n");
+		printf("Unable to open arc130!\n");
 		return EXIT_FAILURE;
 	}
 	
 	/* Read it from the file. */
-	if (!MMReadSparseMatrix(File, &testMatrix))
+	if (!MMReadSparseMatrix(File, &Arc130))
 	{
-		printf("Unable to read test_matrix!\n");
+		printf("Unable to read arc130!\n");
 		fclose(File);
 		return EXIT_FAILURE;
 	}
@@ -57,19 +57,19 @@ int main(int argc, char **argv)
 	fclose(File);
 	
 	/* Distribute the matrix over two processors with an allowed imbalance of 3% and the options provided above. */
-	if (!DistributeMatrixMondriaan(&testMatrix, 2, 0.03, &Options, NULL))
+	if (!DistributeMatrixMondriaan(&Arc130, 2, 0.03, &Options, NULL))
 	{
-		printf("Unable to distribute test_matrix!\n");
+		printf("Unable to distribute arc130!\n");
 		return EXIT_FAILURE;
 	}
 	
 	/* Calculate the communication volume. */
-	CalcCom(&testMatrix, NULL, ROW, &ComVolumeRow, &Dummy, &Dummy, &Dummy, &Dummy);
-	CalcCom(&testMatrix, NULL, COL, &ComVolumeCol, &Dummy, &Dummy, &Dummy, &Dummy);
+	CalcCom(&Arc130, NULL, ROW, &ComVolumeRow, &Dummy, &Dummy, &Dummy, &Dummy);
+	CalcCom(&Arc130, NULL, COL, &ComVolumeCol, &Dummy, &Dummy, &Dummy, &Dummy);
 	
 	/* Calculate the imbalance, making use of the fact that we only distributed the nonzeros over two processors. */
-	MaxNrNz = MAX(testMatrix.Pstart[2] - testMatrix.Pstart[1], testMatrix.Pstart[1] - testMatrix.Pstart[0]);
-	Imbalance = (double)(2*MaxNrNz - testMatrix.NrNzElts)/(double)testMatrix.NrNzElts;
+	MaxNrNz = MAX(Arc130.Pstart[2] - Arc130.Pstart[1], Arc130.Pstart[1] - Arc130.Pstart[0]);
+	Imbalance = (double)(2*MaxNrNz - Arc130.NrNzElts)/(double)Arc130.NrNzElts;
 	
 	if (Imbalance > 0.03)
 	{
@@ -78,11 +78,11 @@ int main(int argc, char **argv)
 	}
 	
 	/* Display information about this partitioning. */
-	printf("Succesfully distributed %ld nonzeros over two processors: %ld are assigned to processor 0 and %ld to processor 1.\n", testMatrix.NrNzElts, testMatrix.Pstart[1] - testMatrix.Pstart[0], testMatrix.Pstart[2] - testMatrix.Pstart[1]);
+	printf("Succesfully distributed %ld nonzeros over two processors: %ld are assigned to processor 0 and %ld to processor 1.\n", Arc130.NrNzElts, Arc130.Pstart[1] - Arc130.Pstart[0], Arc130.Pstart[2] - Arc130.Pstart[1]);
 	printf("This distribution has a total communication volume equal to %ld and imbalance equal to %.1f%%.\n", ComVolumeRow + ComVolumeCol, 100.0*Imbalance);
 	
 	/* Free matrix data. */
-	MMDeleteSparseMatrix(&testMatrix);
+	MMDeleteSparseMatrix(&Arc130);
 	
 	return EXIT_SUCCESS;
 }
