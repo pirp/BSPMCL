@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 	fclose(File);
 	
 	/* Distribute the matrix over two processors with an allowed imbalance of 3% and the options provided above. */
-	if (!DistributeMatrixMondriaan(&testMatrix, 2, 0.03, &Options, NULL))
+	if (!DistributeMatrixMondriaan(&testMatrix, 4, 0.03, &Options, NULL))
 	{
 		printf("Unable to distribute test_matrix!\n");
 		return EXIT_FAILURE;
@@ -81,6 +81,13 @@ int main(int argc, char **argv)
 	printf("Succesfully distributed %ld nonzeros over two processors: %ld are assigned to processor 0 and %ld to processor 1.\n", testMatrix.NrNzElts, testMatrix.Pstart[1] - testMatrix.Pstart[0], testMatrix.Pstart[2] - testMatrix.Pstart[1]);
 	printf("This distribution has a total communication volume equal to %ld and imbalance equal to %.1f%%.\n", ComVolumeRow + ComVolumeCol, 100.0*Imbalance);
 	
+	char output[MAX_WORD_LENGTH]; /* filename of the output */
+
+	sprintf(output, "test-P%d", testMatrix.NrProcs);
+	File = fopen(output, "w");
+	MMWriteSparseMatrix(&testMatrix, File, NULL, &Options);
+	fclose(File);
+
 	/* Free matrix data. */
 	MMDeleteSparseMatrix(&testMatrix);
 	
