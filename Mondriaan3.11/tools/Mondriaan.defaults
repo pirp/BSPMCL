@@ -31,7 +31,7 @@ VectorPartition_Step3                          random
 VectorPartition_MaxNrLoops                     10 
 VectorPartition_MaxNrGreedyImproves            10 
 OutputFormat                                   original
-OutputMode                                     MultipleFiles 
+OutputMode                                     original 
 Seed                                           99 
 Permute                                        none 
 EnforceSymmetricPermutation                    no 
