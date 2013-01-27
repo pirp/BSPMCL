@@ -31,6 +31,8 @@ struct sparsematrix sparse_mult(struct sparsematrix m1, struct sparsematrix m2) 
 		}
 	}
 
+	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] < 0.001) val[i][j] =0;
+
 	int count =0;
 	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] != 0) count++;
 	
@@ -118,7 +120,7 @@ int main(int argc, char **argv){
 	FILE* File;
 	struct sparsematrix testMatrix;
 
-	if (!(File = fopen("bcsstk01.mtx", "r")))
+	if (!(File = fopen("yeast.mtx", "r")))
 	{
 		printf("Unable to open input matrix!\n");
 		return EXIT_FAILURE;
@@ -135,10 +137,17 @@ int main(int argc, char **argv){
 	struct sparsematrix matrix;
 	matrix = testMatrix;
 	int k;
-	for(k=0;k<200;k++) matrix = iteration(matrix,2,2);
-	//print_matrix(matrix);
+	//matrix = iteration(matrix,2,2);
+	
+	for(k=0;k<200;k++){
+		printf("iteration: %d\n",k);
+		matrix = iteration(matrix,2,2);
+		//printf("\n\n\n");
+		//print_matrix(matrix);
+	}
+	print_matrix(matrix);
 
-	if (!(File = fopen("output.txt", "w")))
+	if (!(File = fopen("output_yeast.txt", "w")))
 	{
 		printf("Unable to open output file!\n");
 		return EXIT_FAILURE;
