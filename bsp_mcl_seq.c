@@ -65,7 +65,6 @@ struct sparsematrix sparse_mult(struct sparsematrix m1, struct sparsematrix m2) 
 struct sparsematrix power_matrix(struct sparsematrix matrix, int e){
 	int i=1;
 	while(i<e){
-		printf("ciao\n");
 		matrix = sparse_mult(matrix,matrix);
 		i++;
 	}
@@ -119,9 +118,9 @@ int main(int argc, char **argv){
 	FILE* File;
 	struct sparsematrix testMatrix;
 
-	if (!(File = fopen("test_matrix.mtx", "r")))
+	if (!(File = fopen("bcsstk01.mtx", "r")))
 	{
-		printf("Unable to open test_matrix!\n");
+		printf("Unable to open input matrix!\n");
 		return EXIT_FAILURE;
 	}
 	
@@ -131,15 +130,23 @@ int main(int argc, char **argv){
 		fclose(File);
 		return EXIT_FAILURE;
 	}
-	struct sparsematrix matrix;
-
-	int k;
-	matrix = iteration(testMatrix,2,2);
-	print_matrix(matrix);
-
-	//for(k=0;k<matrix.NrNzElts;k++) printf("(%d,%d)=%f\n",matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
-	
 	fclose(File);
+
+	struct sparsematrix matrix;
+	matrix = testMatrix;
+	int k;
+	for(k=0;k<200;k++) matrix = iteration(matrix,2,2);
+	//print_matrix(matrix);
+
+	if (!(File = fopen("output.txt", "w")))
+	{
+		printf("Unable to open output file!\n");
+		return EXIT_FAILURE;
+	}
+
+	for(k=0;k<matrix.NrNzElts;k++) fprintf(File,"%ld %ld %f\n",matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
+	fclose(File);
+	
 }
 
 
