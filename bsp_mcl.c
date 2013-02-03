@@ -1,96 +1,116 @@
-/*
-This is a small example program which illustrates interfacing with the Mondriaan library.
-
-It can be compiled using:
-
-gcc bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
-
-*/
-
-#include <stdlib.h>
+#include "BSPedupack1.01/bspedupack.c"
 #include <stdio.h>
-/* Make sure to include the Mondriaan headers. */
+#include <stdlib.h>
+#include <math.h>
 #include <Mondriaan.h>
 
-int main(int argc, char **argv)
-{
-	/* This will contain the Mondriaan options. */
-	struct opts Options;
-	/* This file pointer will be the opened Matrix Market file. */
-	FILE *File;
-	/* This structure will contain the testMatrix matrix. */
-	struct sparsematrix testMatrix;
-	/* Variables used for calculating the communication volume. */
-	long ComVolumeRow, ComVolumeCol, Dummy;
-	/* Variables used to calculate the imbalance. */
-	long MaxNrNz;
-	double Imbalance;
-	
-	/* Set the default options. */
-	SetDefaultOptions(&Options);
-	
-	/* We can also read options from disk. */
-	/* if (!SetOptionsFromFile(&Options, "options.txt")) printf("Unable to set options from disk!\n"); */
-	
-	/* If we are done setting the options, we check and apply them. */
-	if (!ApplyOptions(&Options))
-	{
-		printf("Invalid options!\n");
-		return EXIT_FAILURE;
-	}
-	
-	/* Open the testMatrix matrix file. */
-	if (!(File = fopen("test_matrix.mtx", "r")))
-	{
-		printf("Unable to open test_matrix!\n");
-		return EXIT_FAILURE;
-	}
-	
-	/* Read it from the file. */
-	if (!MMReadSparseMatrix(File, &testMatrix))
-	{
-		printf("Unable to read test_matrix!\n");
-		fclose(File);
-		return EXIT_FAILURE;
-	}
-	
-	fclose(File);
-	
-	/* Distribute the matrix over two processors with an allowed imbalance of 3% and the options provided above. */
-	if (!DistributeMatrixMondriaan(&testMatrix, 4, 0.03, &Options, NULL))
-	{
-		printf("Unable to distribute test_matrix!\n");
-		return EXIT_FAILURE;
-	}
-	
-	/* Calculate the communication volume. */
-	CalcCom(&testMatrix, NULL, ROW, &ComVolumeRow, &Dummy, &Dummy, &Dummy, &Dummy);
-	CalcCom(&testMatrix, NULL, COL, &ComVolumeCol, &Dummy, &Dummy, &Dummy, &Dummy);
-	
-	/* Calculate the imbalance, making use of the fact that we only distributed the nonzeros over two processors. */
-	MaxNrNz = MAX(testMatrix.Pstart[2] - testMatrix.Pstart[1], testMatrix.Pstart[1] - testMatrix.Pstart[0]);
-	Imbalance = (double)(2*MaxNrNz - testMatrix.NrNzElts)/(double)testMatrix.NrNzElts;
-	
-	if (Imbalance > 0.03)
-	{
-		printf("Imbalance is too large!\n");
-		return EXIT_FAILURE;
-	}
-	
-	/* Display information about this partitioning. */
-	printf("Succesfully distributed %ld nonzeros over two processors: %ld are assigned to processor 0 and %ld to processor 1.\n", testMatrix.NrNzElts, testMatrix.Pstart[1] - testMatrix.Pstart[0], testMatrix.Pstart[2] - testMatrix.Pstart[1]);
-	printf("This distribution has a total communication volume equal to %ld and imbalance equal to %.1f%%.\n", ComVolumeRow + ComVolumeCol, 100.0*Imbalance);
-	
-	char output[MAX_WORD_LENGTH]; /* filename of the output */
+int P;
 
-	sprintf(output, "test-P%d", testMatrix.NrProcs);
-	File = fopen(output, "w");
-	MMWriteSparseMatrix(&testMatrix, File, NULL, &Options);
-	fclose(File);
-
-	/* Free matrix data. */
-	MMDeleteSparseMatrix(&testMatrix);
-	
-	return EXIT_SUCCESS;
+void print_matrix(int s,struct sparsematrix matrix){
+	int k;
+	for(k=0;k<matrix.NrNzElts;k++){
+		printf("%d: (%ld,%ld)=%f\n",s,matrix.i[k],matrix.j[k],matrix.ReValue[k]);
+	}
 }
 
+void print_own_part(int s, struct sparsematrix matrix){
+	int k;
+	int start = matrix.Pstart[s];
+	int end = matrix.Pstart[s+1];
+	for(k=start;k<end;k++) printf("%d: (%ld,%ld)=%f\n",s,matrix.i[k],matrix.j[k],matrix.ReValue[k]);
+}
+
+void bsp_mcl(){
+	int p,s,t;
+	int i;
+
+	bsp_begin(P);
+
+	p= bsp_nprocs();
+    s= bsp_pid();
+    
+    FILE *File;
+    struct sparsematrix matrix;
+	if (!(File = fopen("test_matrix.mtx", "r"))) printf("Unable to open arc130!\n");
+	if (!MMReadSparseMatrix(File, &matrix)) printf("Unable to read arc130!\n");
+	fclose(File);
+
+	long length = matrix.NrNzElts;
+
+
+	long *MatrixI;
+	MatrixI = vecallocl(length);
+
+	for(i=0;i<length;i++) MatrixI[i] = 40;
+
+	if(s==1)for(i=0;i<length;i++) printf("%d: %d=%ld\n",s,i,matrix.i[i]);
+
+	bsp_push_reg(MatrixI,length*sizeof(long));
+	//bsp_push_reg(matrix.j,length*sizeof(long));
+	//bsp_push_reg(matrix.ReValue,length*sizeof(long));
+	//bsp_push_reg(matrix.Pstart,(p+1)*sizeof(long));
+
+	bsp_sync();
+
+	if(s==0){
+		struct opts Options;
+
+		if (!SetOptionsFromFile(&Options, "Mondriaan.defaults")) printf("Unable to set options from disk!\n");
+		if (!ApplyOptions(&Options)) printf("Invalid options!\n");
+
+		/* Distribute the matrix over two processors with an allowed imbalance of 3% and the options provided above. */
+		if (!DistributeMatrixMondriaan(&matrix, 2, 0.03, &Options, NULL)) printf("Unable to distribute arc130!\n");
+		matrix.i[length-1] = 50;
+
+		for(t=0;t<p;t++){
+		bsp_put(t,matrix.i,MatrixI,0,length*SZLONG);			
+		//bsp_put(t,&matrix.j,matrix.j,length*sizeof(long),0);			
+		//bsp_put(t,&matrix.ReValue,matrix.ReValue,length*sizeof(long),0);			
+		//bsp_put(t,&matrix.Pstart,matrix.Pstart,(p+1)*sizeof(long),0);			
+		}
+	}
+
+	
+	bsp_sync();
+
+	bsp_pop_reg(MatrixI);
+
+	matrix.i = MatrixI;
+
+	//for(i=0;i<length;i++) matrix.i[i] = MatrixI[i];
+
+	if(s==1)for(i=0;i<length;i++) printf("%d: %d=%ld\n",s,i,matrix.i[i]);
+
+	vecfreel(MatrixI);
+	//bsp_pop_reg(matrix.j);
+	//bsp_pop_reg(matrix.ReValue);
+	//bsp_pop_reg(matrix.Pstart);
+
+	
+	/*
+	print_own_part(s,matrix);
+	
+	char outputname[100];
+	sprintf(outputname,"output_%d-%d.txt",Options.SplitStrategy,s);
+
+	if (!(File = fopen(outputname, "w"))) printf("Unable to open output file!\n");
+
+	MMWriteSparseMatrix(&matrix,File,NULL,&Options);
+	   	
+	*/
+    bsp_end();
+
+}
+
+int main(int argc, char **argv){
+ 
+    bsp_init(bsp_mcl, argc, argv);
+   	P = atoi(argv[1]);
+    if (P>bsp_nprocs()){
+        printf("Not enough processors available:");
+        printf(" %d wanted, %d available\n", P, bsp_nprocs());
+        exit(1);
+    }
+    bsp_mcl();
+    exit(0);
+}

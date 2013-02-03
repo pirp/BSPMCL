@@ -34,6 +34,21 @@ int *vecalloci(int n){
 
 } /* end vecalloci */
 
+long *vecallocl(int n){
+    /* This function allocates a vector of integers of length n */
+    long *pi;
+
+    if (n==0){
+        pi= NULL; 
+    } else { 
+        pi= (long *)malloc(n*SZLONG);
+        if (pi==NULL)
+            bsp_abort("vecalloci: not enough memory");
+    }
+    return pi;
+
+} /* end vecalloci */
+
 double **matallocd(int m, int n){
     /* This function allocates an m x n matrix of doubles */
     int i;
@@ -62,6 +77,14 @@ double **matallocd(int m, int n){
 } /* end matallocd */
 
 void vecfreed(double *pd){
+    /* This function frees a vector of doubles */
+
+    if (pd!=NULL)
+        free(pd);
+
+} /* end vecfreed */
+
+void vecfreel(long *pd){
     /* This function frees a vector of doubles */
 
     if (pd!=NULL)

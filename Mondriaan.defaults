@@ -1,7 +1,7 @@
 # Mondriaan default settings: 
 LoadbalanceStrategy                            constant 
 LoadbalanceAdjust                              yes 
-SplitStrategy                                  localbest 
+SplitStrategy                                  onedimrow 
 Alternate_FirstDirection                       ratio 
 SplitMethod                                    KLFM 
 Partitioner                                    mondriaan 

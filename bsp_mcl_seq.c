@@ -99,6 +99,33 @@ struct sparsematrix normalize_columns(struct sparsematrix matrix){
 
 }
 
+struct sparsematrix normalize_rows(struct sparsematrix matrix){
+	int numberRows = matrix.m;
+	double* sumValues = (double*) malloc(numberRows*sizeof(double));
+	int row,k;
+	double value;
+
+	for(k=0;k<numberRows;k++) sumValues[k] = 0;
+
+	for(k=0;k<matrix.NrNzElts;k++){
+		row = matrix.i[k];
+		value = matrix.ReValue[k];
+		sumValues[row] += value;
+	}
+
+
+	for(k=0;k<matrix.NrNzElts;k++){
+		row = matrix.i[k];
+		value = matrix.ReValue[k];
+		matrix.ReValue[k] = value/sumValues[row];
+	}
+
+	return matrix;
+
+}
+
+
+
 struct sparsematrix inflateMatrix(struct sparsematrix matrix, int r){
 	int k;
 	double value;
@@ -110,7 +137,7 @@ struct sparsematrix inflateMatrix(struct sparsematrix matrix, int r){
 };
 
 struct sparsematrix iteration(struct sparsematrix matrix, int r, int e){
-	matrix = normalize_columns(matrix);
+	matrix = normalize_rows(matrix);
 	matrix = power_matrix(matrix,e);
 	matrix = inflateMatrix(matrix,r);
 	return matrix;
@@ -119,10 +146,12 @@ struct sparsematrix iteration(struct sparsematrix matrix, int r, int e){
 int main(int argc, char **argv){
 	FILE* File;
 	struct sparsematrix testMatrix;
+	char inputname[100];
+	sprintf(inputname,"%s.mtx",argv[1]);
 
-	if (!(File = fopen("yeast.mtx", "r")))
+	if (!(File = fopen(inputname, "r")))
 	{
-		printf("Unable to open input matrix!\n");
+		printf("Unable to open input matrix! Make sure it's the first parameter to the program\n");
 		return EXIT_FAILURE;
 	}
 	
@@ -139,15 +168,18 @@ int main(int argc, char **argv){
 	int k;
 	//matrix = iteration(matrix,2,2);
 	
-	for(k=0;k<200;k++){
+	for(k=0;k<10;k++){
 		printf("iteration: %d\n",k);
 		matrix = iteration(matrix,2,2);
 		//printf("\n\n\n");
 		//print_matrix(matrix);
 	}
-	print_matrix(matrix);
+	//print_matrix(matrix);
 
-	if (!(File = fopen("output_yeast.txt", "w")))
+	char outputname[100];
+	sprintf(outputname,"output_%s.txt",argv[1]);
+
+	if (!(File = fopen(outputname, "w")))
 	{
 		printf("Unable to open output file!\n");
 		return EXIT_FAILURE;

@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 		printf("Invalid options!\n");
 		return EXIT_FAILURE;
 	}
+	Options.SplitStrategy = 4;
 	
 	/* Open the arc130 matrix file. */
 	if (!(File = fopen("../tests/arc130.mtx", "r")))
