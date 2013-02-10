@@ -5,11 +5,14 @@
 #include <Mondriaan.h>
 #include "sp_utilities.c"
 
+#define Niter 2
+
 int P;
 char inputname[100];
 
 void print_matrix(int s,struct sparsematrix matrix){
 	int k;
+	printf("nz: %ld\n", matrix.NrNzElts);
 	for(k=0;k<matrix.NrNzElts;k++){
 		printf("%d: (%ld,%ld)=%f\n",s,matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
 	}
@@ -30,15 +33,17 @@ struct sparsematrix reorder_col_incr(struct sparsematrix matrix){
 
 	int k,l;
 
+	long* tempArray = (long*) malloc(length*SZLONG);
+	for(k=0;k<length;k++) tempArray[k] = matrix.j[k];
 
 	struct sparsematrix newmatrix;
 
-	long* indices = QSort(matrix.j,length);
+	long* indices = QSort(tempArray,length);
 
 	for(l=0;l<length;l++){
 		k = indices[length-l-1];
 		I[l] = matrix.i[k];
-		J[l] = matrix.j[length-l-1];
+		J[l] = matrix.j[k];
 		Val[l] = matrix.ReValue[k];
 		
 	}
@@ -47,7 +52,7 @@ struct sparsematrix reorder_col_incr(struct sparsematrix matrix){
 	newmatrix.j = J;
 	newmatrix.ReValue = Val;
 	newmatrix.NrNzElts = length;
-
+	free(tempArray);
 	return newmatrix;
 }
 
@@ -241,9 +246,6 @@ struct sparsematrix mergeLists(long* listI, long* listJ, double* listVal, int m,
 	return finalMatrix;
 }
 
-void iteration(int s, int p, struct sparsematrix matrixA, struct sparsematrix matrixB){
-}
-
 struct sparsematrix sparse_mult(int s, int p, struct sparsematrix matrixA, struct sparsematrix matrixB){
 
 	int t;
@@ -255,6 +257,7 @@ struct sparsematrix sparse_mult(int s, int p, struct sparsematrix matrixA, struc
 	long* GlobNZ = vecallocl(p);
 	bsp_push_reg(GlobNZ,p*SZLONG);
 	bsp_sync();
+
 	
 	// every processor communicates the size of his computed part
 	for(t=0;t<p;t++) bsp_put(t,&newmatrix.NrNzElts,GlobNZ,s*SZLONG,SZLONG);
@@ -302,24 +305,24 @@ struct sparsematrix sparse_mult(int s, int p, struct sparsematrix matrixA, struc
 	return matrix2;
 }
 
-void read_from_file(struct sparsematrix *matrixA, struct sparsematrix *matrixB){
+void read_from_file(char* input, struct sparsematrix *matrixA, struct sparsematrix *matrixB){
 	// every processor reads matrices from file, such that arrays are allocated
     FILE *File;
     
 
-	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
+	if (!(File = fopen(input, "r"))) printf("Unable to open the matrix!\n");
 	if (!MMReadSparseMatrix(File, matrixA)) printf("Unable to read into A!\n");
 	fclose(File);
 
-	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
+	if (!(File = fopen(input, "r"))) printf("Unable to open the matrix!\n");
 	if (!MMReadSparseMatrix(File, matrixB)) printf("Unable to read into B!\n");
 	fclose(File);
 }
 
-void split_matrices(int s, int p, struct sparsematrix *matrixA, struct sparsematrix *matrixB){
+void split_matrices(int s, int p, struct sparsematrix *matrixB){
 	int t;
 	// length of the arrays in the sparsematrix struct
-	long length = matrixA->NrNzElts;
+	long length = matrixB->NrNzElts;
 
 	// temporary arrays for communication
 	long *MatrixBI, *MatrixBJ, *MatrixBPstart;
@@ -331,7 +334,7 @@ void split_matrices(int s, int p, struct sparsematrix *matrixA, struct sparsemat
 	
 	//allocation of Pstart for the processors that will not get it from mondriaan
 	if (s!=0) matrixB->Pstart = vecallocl(p+1);
-	
+
 	// registration of the temp arrays
 	bsp_push_reg(MatrixBI,length*SZLONG);
 	bsp_push_reg(MatrixBJ,length*SZLONG);
@@ -340,14 +343,16 @@ void split_matrices(int s, int p, struct sparsematrix *matrixA, struct sparsemat
 
 	bsp_sync();
 
+
 	if(s==0){
 		// only proc 0 uses mondriaan and splits the matrix 
+
+		//print_matrix(s,*matrixB);
 		struct opts OptionsB;
 		if (!SetOptionsFromFile(&OptionsB, "Mondriaan.defaults")) printf("Unable to set options from disk!\n");
 		OptionsB.SplitStrategy = 4;
 		if (!ApplyOptions(&OptionsB)) printf("Invalid options!\n");
 		if (!DistributeMatrixMondriaan(matrixB, p, 0.03, &OptionsB, NULL)) printf("Unable to distribute!\n");
-
 		
 		// communication
 		for(t=0;t<p;t++){
@@ -384,6 +389,14 @@ void split_matrices(int s, int p, struct sparsematrix *matrixA, struct sparsemat
 	vecfreel(MatrixBPstart);
 }
 
+struct sparsematrix iteration(int s, int p, struct sparsematrix matrixA, struct sparsematrix matrixB){
+	split_matrices(s,p,&matrixB);
+	struct sparsematrix matrix = sparse_mult(s,p,matrixA,matrixB);
+	matrix = inflateMatrix(matrix,2);
+	return matrix;
+}
+
+
 void bsp_mcl(){
 	int p,s,t;
 	int i,j;
@@ -395,17 +408,29 @@ void bsp_mcl(){
 
     struct sparsematrix matrixA;
     struct sparsematrix matrixB;
+    struct sparsematrix matrix;
 
-    read_from_file(&matrixA,&matrixB);
+    read_from_file(inputname,&matrixA,&matrixB);
 
-	split_matrices(s,p,&matrixA,&matrixB);
 
-	struct sparsematrix newmatrix = sparse_mult(s,p,matrixA,matrixB);
+    for(i=0;i<Niter;i++){
+    	matrixA = normalize_rows(matrixA);
+    	matrixB = normalize_rows(matrixB);
+    	if(s==0) printf("iteration: %d - %ld\n",i,matrixB.NrNzElts);
+    	matrix = iteration(s,p,matrixA,matrixB);
 
-	if(s==0) print_matrix(s,newmatrix);
+  
+	    matrixB.i = matrix.i;
+	    matrixB.j = matrix.j;
+	    matrixB.ReValue = matrix.ReValue;
+	    matrixB.NrNzElts = matrix.NrNzElts;
+
+	    matrixA = reorder_col_incr(matrix);
+    }
+
+  	//if(s==0) print_matrix(s,matrix);
 
     bsp_end();
-
 }
 
 int main(int argc, char **argv){

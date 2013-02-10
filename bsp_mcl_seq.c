@@ -4,6 +4,8 @@
 #include <math.h>
 #include "sp_utilities.c"
 
+#define Niter 10
+
 void print_matrix(struct sparsematrix matrix){
 	int k;
 	for(k=0;k<matrix.NrNzElts;k++){
@@ -32,7 +34,7 @@ struct sparsematrix sparse_mult(struct sparsematrix m1, struct sparsematrix m2) 
 		}
 	}
 
-	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] < 0.001) val[i][j] =0;
+	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] < 0.0001) val[i][j] =0;
 
 	int count =0;
 	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] != 0) count++;
@@ -83,7 +85,7 @@ struct sparsematrix iteration(struct sparsematrix matrix, int r, int e){
 
 int main(int argc, char **argv){
 	FILE* File;
-	struct sparsematrix testMatrix;
+	struct sparsematrix matrix;
 	char inputname[100];
 	sprintf(inputname,"%s.mtx",argv[1]);
 
@@ -93,21 +95,18 @@ int main(int argc, char **argv){
 		return EXIT_FAILURE;
 	}
 	
-	if (!MMReadSparseMatrix(File, &testMatrix))
+	if (!MMReadSparseMatrix(File, &matrix))
 	{
-		printf("Unable to read test_matrix!\n");
+		printf("Unable to read input matrix!\n");
 		fclose(File);
 		return EXIT_FAILURE;
 	}
 	fclose(File);
 
-	struct sparsematrix matrix;
-	matrix = testMatrix;
 	int k;
 	//matrix = iteration(matrix,2,2);
-	
-	for(k=0;k<10;k++){
-		printf("iteration: %d\n",k);
+	for(k=0;k<Niter;k++){
+		printf("iteration: %d - %ld\n",k,matrix.NrNzElts);
 		matrix = iteration(matrix,2,2);
 		//printf("\n\n\n");
 		//print_matrix(matrix);

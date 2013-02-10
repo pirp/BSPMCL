@@ -297,7 +297,7 @@ int DistributeMatrixMondriaan(struct sparsematrix *pT, int P, double eps, const 
     if (pOptions->Partitioner == FullPaToH) return DistributeMatrixPaToH(pT, P, eps, pOptions);
     
     if( pT->Pstart == NULL ) {
-        fprintf(stderr, "Warning (DistributeMatrixMondriaan): Pstart array was not initialised. Doing this now.\n");
+        //fprintf(stderr, "Warning (DistributeMatrixMondriaan): Pstart array was not initialised. Doing this now.\n");
         if( !PstartInit(pT, P) ) {
              fprintf(stderr, "DistributeMatrixMondriaan(): error during initialisation of Pstart!\n");
              return FALSE;
