@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <Mondriaan.h>
+#include "sp_utilities.c"
 
 int P;
 char inputname[100];
@@ -19,6 +20,35 @@ void print_own_part(int s, struct sparsematrix matrix){
 	int start = matrix.Pstart[s];
 	int end = matrix.Pstart[s+1];
 	for(k=start;k<end;k++) printf("%d: (%ld,%ld)=%f\n",s,matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
+}
+
+struct sparsematrix reorder_col_incr(struct sparsematrix matrix){
+	long length = matrix.NrNzElts;
+	long* I = (long*) malloc(length*sizeof(long));
+	long* J = (long*) malloc(length*sizeof(long));
+	double* Val = (double*) malloc(length*sizeof(double));
+
+	int k,l;
+
+
+	struct sparsematrix newmatrix;
+
+	long* indices = QSort(matrix.j,length);
+
+	for(l=0;l<length;l++){
+		k = indices[length-l-1];
+		I[l] = matrix.i[k];
+		J[l] = matrix.j[length-l-1];
+		Val[l] = matrix.ReValue[k];
+		
+	}
+
+	newmatrix.i = I;
+	newmatrix.j = J;
+	newmatrix.ReValue = Val;
+	newmatrix.NrNzElts = length;
+
+	return newmatrix;
 }
 
 struct sparsematrix outerproduct_even(int s, struct sparsematrix matrixA, struct sparsematrix matrixB){
@@ -211,6 +241,149 @@ struct sparsematrix mergeLists(long* listI, long* listJ, double* listVal, int m,
 	return finalMatrix;
 }
 
+void iteration(int s, int p, struct sparsematrix matrixA, struct sparsematrix matrixB){
+}
+
+struct sparsematrix sparse_mult(int s, int p, struct sparsematrix matrixA, struct sparsematrix matrixB){
+
+	int t;
+
+	// computes the outerproduct of the owned rows/columns
+	struct sparsematrix newmatrix = (s%2) ? outerproduct_odd(s,matrixA,matrixB) : outerproduct_even(s,matrixA,matrixB);
+	
+	// allocation & registration of the vector that will hold the count of nonzeros from all the procs
+	long* GlobNZ = vecallocl(p);
+	bsp_push_reg(GlobNZ,p*SZLONG);
+	bsp_sync();
+	
+	// every processor communicates the size of his computed part
+	for(t=0;t<p;t++) bsp_put(t,&newmatrix.NrNzElts,GlobNZ,s*SZLONG,SZLONG);
+	bsp_sync();
+	bsp_pop_reg(GlobNZ);
+
+	// determining the size of the list which will contain the computed part for every processor
+	long finalListSize = 0;
+	for(t=0;t<p;t++) finalListSize += GlobNZ[t];
+
+	// calculating the offset in which to put the local elements
+	long offset = 0;
+	for(t=0;t<s;t++) offset +=GlobNZ[t];
+
+	// lists with all the newly computed elements
+	long* finalListI = vecallocl(finalListSize);
+	long* finalListJ = vecallocl(finalListSize);
+	double* finalListVal = vecallocd(finalListSize);
+	bsp_push_reg(finalListI,finalListSize*SZLONG);
+	bsp_push_reg(finalListJ,finalListSize*SZLONG);
+	bsp_push_reg(finalListVal,finalListSize*SZDBL);
+	bsp_sync();
+
+	// communication
+	for(t=0;t<p;t++){
+		bsp_put(t,newmatrix.i,finalListI,offset*SZLONG,newmatrix.NrNzElts*SZLONG);
+		bsp_put(t,newmatrix.j,finalListJ,offset*SZLONG,newmatrix.NrNzElts*SZLONG);
+		bsp_put(t,newmatrix.ReValue,finalListVal,offset*SZDBL,newmatrix.NrNzElts*SZDBL);
+	}
+
+	bsp_sync();
+
+	bsp_pop_reg(finalListI);
+	bsp_pop_reg(finalListJ);
+	bsp_pop_reg(finalListVal);
+
+	// merging duplicates in this list, returning a new sparse matrix
+	struct sparsematrix matrix2 = mergeLists(finalListI,finalListJ,finalListVal,newmatrix.m,newmatrix.n,finalListSize);
+	
+	vecfreel(GlobNZ);
+	vecfreel(finalListI);
+	vecfreel(finalListJ);
+	vecfreed(finalListVal);	
+
+	return matrix2;
+}
+
+void read_from_file(struct sparsematrix *matrixA, struct sparsematrix *matrixB){
+	// every processor reads matrices from file, such that arrays are allocated
+    FILE *File;
+    
+
+	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
+	if (!MMReadSparseMatrix(File, matrixA)) printf("Unable to read into A!\n");
+	fclose(File);
+
+	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
+	if (!MMReadSparseMatrix(File, matrixB)) printf("Unable to read into B!\n");
+	fclose(File);
+}
+
+void split_matrices(int s, int p, struct sparsematrix *matrixA, struct sparsematrix *matrixB){
+	int t;
+	// length of the arrays in the sparsematrix struct
+	long length = matrixA->NrNzElts;
+
+	// temporary arrays for communication
+	long *MatrixBI, *MatrixBJ, *MatrixBPstart;
+	double  *MatrixBReValue;
+	MatrixBI = vecallocl(length);
+	MatrixBJ = vecallocl(length);
+	MatrixBReValue = vecallocd(length);
+	MatrixBPstart = vecallocl(p+1);
+	
+	//allocation of Pstart for the processors that will not get it from mondriaan
+	if (s!=0) matrixB->Pstart = vecallocl(p+1);
+	
+	// registration of the temp arrays
+	bsp_push_reg(MatrixBI,length*SZLONG);
+	bsp_push_reg(MatrixBJ,length*SZLONG);
+	bsp_push_reg(MatrixBReValue,length*SZDBL);
+	bsp_push_reg(MatrixBPstart,length*SZLONG);
+
+	bsp_sync();
+
+	if(s==0){
+		// only proc 0 uses mondriaan and splits the matrix 
+		struct opts OptionsB;
+		if (!SetOptionsFromFile(&OptionsB, "Mondriaan.defaults")) printf("Unable to set options from disk!\n");
+		OptionsB.SplitStrategy = 4;
+		if (!ApplyOptions(&OptionsB)) printf("Invalid options!\n");
+		if (!DistributeMatrixMondriaan(matrixB, p, 0.03, &OptionsB, NULL)) printf("Unable to distribute!\n");
+
+		
+		// communication
+		for(t=0;t<p;t++){
+			bsp_put(t,matrixB->i,MatrixBI,0,length*SZLONG);			
+			bsp_put(t,matrixB->j,MatrixBJ,0,length*SZLONG);			
+			bsp_put(t,matrixB->ReValue,MatrixBReValue,0,length*SZDBL);			
+			bsp_put(t,matrixB->Pstart,MatrixBPstart,0,(p+1)*SZLONG);
+		}
+	}
+
+	
+	bsp_sync();
+
+	// B is updated with the new information from p0
+
+	for(t=0;t<length;t++){
+		matrixB->i[t] = MatrixBI[t];
+		matrixB->j[t] = MatrixBJ[t];
+		matrixB->ReValue[t] = MatrixBReValue[t];
+	}
+
+	for(t=0;t<p+1;t++) matrixB->Pstart[t] = MatrixBPstart[t];
+
+	// registration of the temp arrays not needed anymore
+	bsp_pop_reg(MatrixBI);
+	bsp_pop_reg(MatrixBJ);
+	bsp_pop_reg(MatrixBReValue);
+	bsp_pop_reg(MatrixBPstart);
+
+	// temp arrays not required anymore are freed from memory
+	vecfreel(MatrixBI);
+	vecfreel(MatrixBJ);
+	vecfreed(MatrixBReValue);
+	vecfreel(MatrixBPstart);
+}
+
 void bsp_mcl(){
 	int p,s,t;
 	int i,j;
@@ -220,180 +393,16 @@ void bsp_mcl(){
 	p= bsp_nprocs();
     s= bsp_pid();
 
-    // every processor reads the matrix from file, such that arrays are allocated
-    FILE *File;
     struct sparsematrix matrixA;
     struct sparsematrix matrixB;
 
-	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
-	if (!MMReadSparseMatrix(File, &matrixA)) printf("Unable to read into A!\n");
-	fclose(File);
+    read_from_file(&matrixA,&matrixB);
 
-	if (!(File = fopen(inputname, "r"))) printf("Unable to open the matrix!\n");
-	if (!MMReadSparseMatrix(File, &matrixB)) printf("Unable to read into B!\n");
-	fclose(File);
+	split_matrices(s,p,&matrixA,&matrixB);
 
-	// length of the arrays in the sparsematrix struct
-	long length = matrixA.NrNzElts;
+	struct sparsematrix newmatrix = sparse_mult(s,p,matrixA,matrixB);
 
-	// temporary arrays for communication
-	//long *MatrixAI, *MatrixAJ, *MatrixAPstart;
-	long *MatrixBI, *MatrixBJ, *MatrixBPstart;
-	//double  *MatrixAReValue;
-	double  *MatrixBReValue;
-	/*MatrixAI = vecallocl(length);
-	MatrixAJ = vecallocl(length);
-	MatrixAReValue = vecallocd(length);
-	MatrixAPstart = vecallocl(p+1);*/
-	MatrixBI = vecallocl(length);
-	MatrixBJ = vecallocl(length);
-	MatrixBReValue = vecallocd(length);
-	MatrixBPstart = vecallocl(p+1);
-	if (s!=0) {
-		//matrixA.Pstart = vecallocl(p+1);
-		matrixB.Pstart = vecallocl(p+1);
-	}
-
-	// registration of the temp arrays
-	/*bsp_push_reg(MatrixAI,length*SZLONG);
-	bsp_push_reg(MatrixAJ,length*SZLONG);
-	bsp_push_reg(MatrixAReValue,length*SZDBL);
-	bsp_push_reg(MatrixAPstart,length*SZLONG);*/
-	bsp_push_reg(MatrixBI,length*SZLONG);
-	bsp_push_reg(MatrixBJ,length*SZLONG);
-	bsp_push_reg(MatrixBReValue,length*SZDBL);
-	bsp_push_reg(MatrixBPstart,length*SZLONG);
-
-	
-	bsp_sync();
-
-	if(s==0){
-		// only proc 0 uses mondriaan and splits the matrix 
-		//struct opts OptionsA;
-		struct opts OptionsB;
-
-		//if (!SetOptionsFromFile(&OptionsA, "Mondriaan.defaults")) printf("Unable to set options from disk!\n");
-		if (!SetOptionsFromFile(&OptionsB, "Mondriaan.defaults")) printf("Unable to set options from disk!\n");
-
-		//OptionsA.SplitStrategy = 5;
-		OptionsB.SplitStrategy = 4;
-		//if (!ApplyOptions(&OptionsA)) printf("Invalid options!\n");
-		if (!ApplyOptions(&OptionsB)) printf("Invalid options!\n");
-
-
-		//if (!DistributeMatrixMondriaan(&matrixA, p, 0.03, &OptionsA, NULL)) printf("Unable to distribute!\n");
-		if (!DistributeMatrixMondriaan(&matrixB, p, 0.03, &OptionsB, NULL)) printf("Unable to distribute!\n");
-
-		
-		// communication
-		for(t=0;t<p;t++){
-			/*bsp_put(t,matrixA.i,MatrixAI,0,length*SZLONG);			
-			bsp_put(t,matrixA.j,MatrixAJ,0,length*SZLONG);			
-			bsp_put(t,matrixA.ReValue,MatrixAReValue,0,length*SZDBL);			
-			bsp_put(t,matrixA.Pstart,MatrixAPstart,0,(p+1)*SZLONG);*/
-			bsp_put(t,matrixB.i,MatrixBI,0,length*SZLONG);			
-			bsp_put(t,matrixB.j,MatrixBJ,0,length*SZLONG);			
-			bsp_put(t,matrixB.ReValue,MatrixBReValue,0,length*SZDBL);			
-			bsp_put(t,matrixB.Pstart,MatrixBPstart,0,(p+1)*SZLONG);
-		}
-		/* char outputname[100];
-		sprintf(outputname,"outputB_%d-%d.txt",OptionsB.SplitStrategy,s);
-		if (!(File = fopen(outputname, "w"))) printf("Unable to open output file!\n");
-		MMWriteSparseMatrix(&matrixB,File,NULL,&OptionsB);
-		fclose(File);*/
-	}
-
-	
-	bsp_sync();
-
-	// sparsematrix is updated with the new information from p0
-
-	for(t=0;t<length;t++){
-		/*matrixA.i[t] = MatrixAI[t];
-		matrixA.j[t] = MatrixAJ[t];
-		matrixA.ReValue[t] = MatrixAReValue[t];*/
-		matrixB.i[t] = MatrixBI[t];
-		matrixB.j[t] = MatrixBJ[t];
-		matrixB.ReValue[t] = MatrixBReValue[t];
-	}
-
-
-	for(t=0;t<p+1;t++){	
-		//matrixA.Pstart[t] = MatrixAPstart[t];
-		matrixB.Pstart[t] = MatrixBPstart[t];
-	}
-
-	//if (s==0) for(t=0;t<p+1;t++) printf("%d: %d %ld\n", s, t, matrixA.Pstart[t]);
-
-	// registration of the temp arrays not needed anymore
-	/*bsp_pop_reg(MatrixAI);
-	bsp_pop_reg(MatrixAJ);
-	bsp_pop_reg(MatrixAReValue);
-	bsp_pop_reg(MatrixAPstart);*/
-	bsp_pop_reg(MatrixBI);
-	bsp_pop_reg(MatrixBJ);
-	bsp_pop_reg(MatrixBReValue);
-	bsp_pop_reg(MatrixBPstart);
-
-	// temp arrays are freed from memory
-	/*vecfreel(MatrixAI);
-	vecfreel(MatrixAJ);
-	vecfreed(MatrixAReValue);
-	vecfreel(MatrixAPstart);*/
-	vecfreel(MatrixBI);
-	vecfreel(MatrixBJ);
-	vecfreed(MatrixBReValue);
-	vecfreel(MatrixBPstart);
-
-	struct sparsematrix newmatrix = (s%2) ? outerproduct_odd(s,matrixA,matrixB) : outerproduct_even(s,matrixA,matrixB);
-	
-	long* GlobNZ = vecallocl(p); bsp_push_reg(GlobNZ,p*SZLONG);
-	bsp_sync();
-	
-	for(t=0;t<p;t++) bsp_put(t,&newmatrix.NrNzElts,GlobNZ,s*SZLONG,SZLONG);
-
-	bsp_sync();
-
-	bsp_pop_reg(GlobNZ);
-
-	long finalListSize = 0;
-	for(t=0;t<p;t++) finalListSize += GlobNZ[t];
-	long offset = 0;
-	for(t=0;t<s;t++) offset +=GlobNZ[t];
-
-	long* finalListI = vecallocl(finalListSize);
-	long* finalListJ = vecallocl(finalListSize);
-	double* finalListVal = vecallocd(finalListSize);
-
-
-	bsp_push_reg(finalListI,finalListSize*SZLONG);
-	bsp_push_reg(finalListJ,finalListSize*SZLONG);
-	bsp_push_reg(finalListVal,finalListSize*SZDBL);
-	bsp_sync();
-
-
-	for(t=0;t<p;t++){
-		bsp_put(t,newmatrix.i,finalListI,offset*SZLONG,newmatrix.NrNzElts*SZLONG);
-		bsp_put(t,newmatrix.j,finalListJ,offset*SZLONG,newmatrix.NrNzElts*SZLONG);
-		bsp_put(t,newmatrix.ReValue,finalListVal,offset*SZDBL,newmatrix.NrNzElts*SZDBL);
-	}
-
-	bsp_sync();
-
-	struct sparsematrix matrix2 = mergeLists(finalListI,finalListJ,finalListVal,newmatrix.m,newmatrix.n,finalListSize);
-
-	if(s==0) print_matrix(s,matrix2);
-
-
-
-	bsp_pop_reg(finalListI);
-	bsp_pop_reg(finalListJ);
-	bsp_pop_reg(finalListVal);
-	
-	vecfreel(GlobNZ);
-	vecfreel(finalListI);
-	vecfreel(finalListJ);
-	vecfreed(finalListVal);
+	if(s==0) print_matrix(s,newmatrix);
 
     bsp_end();
 
