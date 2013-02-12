@@ -34,7 +34,7 @@ struct sparsematrix sparse_mult(struct sparsematrix m1, struct sparsematrix m2) 
 		}
 	}
 
-	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] < 0.0001) val[i][j] =0;
+	//for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] < 0.001) val[i][j] =0;
 
 	int count =0;
 	for(i=0;i<m1.n;i++) for(j=0;j<m1.n;j++) if(val[i][j] != 0) count++;

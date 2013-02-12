@@ -5,7 +5,7 @@
 #include <Mondriaan.h>
 #include "sp_utilities.c"
 
-#define Niter 2
+#define Niter 10
 
 int P;
 char inputname[100];
@@ -228,6 +228,7 @@ struct sparsematrix mergeLists(long* listI, long* listJ, double* listVal, int m,
 		if(val[i][j]!=0){
 			rows[k] = i;
 			cols[k] = j;
+			//if(val[i][j] > 0.0001) vals[k] = val[i][j];
 			vals[k] = val[i][j];
 			k++;
 		}
