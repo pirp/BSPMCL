@@ -3,6 +3,7 @@
 #include <Mondriaan.h>
 #include <math.h>
 #include "sp_utilities.c"
+#include <time.h>
 
 #define Niter 10
 
@@ -87,32 +88,29 @@ int main(int argc, char **argv){
 	FILE* File;
 	struct sparsematrix matrix;
 	char inputname[100];
-	sprintf(inputname,"%s.mtx",argv[1]);
+	sprintf(inputname,"%s",argv[1]);
 
-	if (!(File = fopen(inputname, "r")))
-	{
-		printf("Unable to open input matrix! Make sure it's the first parameter to the program\n");
-		return EXIT_FAILURE;
-	}
-	
-	if (!MMReadSparseMatrix(File, &matrix))
-	{
-		printf("Unable to read input matrix!\n");
-		fclose(File);
-		return EXIT_FAILURE;
-	}
+	if (!(File = fopen(inputname, "r"))) printf("Unable to open input matrix! Make sure it's the first parameter to the program\n");
+	if (!MMReadSparseMatrix(File, &matrix))	printf("Unable to read input matrix!\n");
 	fclose(File);
 
 	int k;
-	//matrix = iteration(matrix,2,2);
-	for(k=0;k<Niter;k++){
-		printf("iteration: %d - %ld\n",k,matrix.NrNzElts);
-		matrix = iteration(matrix,2,2);
-		//printf("\n\n\n");
-		//print_matrix(matrix);
-	}
-	//print_matrix(matrix);
+	clock_t time_start,time0,time1;
+	time_start = clock();
+	time0 = time_start;
 
+	printf("iteration: %d \t %ld \n",k+1,matrix.NrNzElts);
+	
+	for(k=0;k<Niter;k++){
+		matrix = iteration(matrix,2,2);
+		time1 = clock();
+		printf("iteration: %d \t %ld \t %f \n",k+1,matrix.NrNzElts,(double) (time1-time0)/CLOCKS_PER_SEC);
+		time0=time1;
+		if (matrix.NrNzElts ==0) break;
+	}
+	printf("total elapsed time \t %f \n",(double) (time1-time_start)/CLOCKS_PER_SEC);
+	
+/*
 	char outputname[100];
 	sprintf(outputname,"output_%s.txt",argv[1]);
 
@@ -124,7 +122,7 @@ int main(int argc, char **argv){
 
 	for(k=0;k<matrix.NrNzElts;k++) fprintf(File,"%ld %ld %f\n",matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
 	fclose(File);
-	
+	*/
 }
 
 

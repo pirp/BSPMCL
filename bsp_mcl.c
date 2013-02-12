@@ -401,6 +401,7 @@ struct sparsematrix iteration(int s, int p, struct sparsematrix matrixA, struct 
 void bsp_mcl(){
 	int p,s,t;
 	int i,j;
+	double time0,time1, time_start;
 
 	bsp_begin(P);
 
@@ -413,21 +414,29 @@ void bsp_mcl(){
 
     read_from_file(inputname,&matrixA,&matrixB);
 
+    time_start = bsp_time();
+    time0 = time_start;
+
+    if(s==0) printf("iteration: %d \t %ld \n",0,matrixB.NrNzElts);
 
     for(i=0;i<Niter;i++){
     	matrixA = normalize_rows(matrixA);
     	matrixB = normalize_rows(matrixB);
-    	if(s==0) printf("iteration: %d - %ld\n",i,matrixB.NrNzElts);
     	matrix = iteration(s,p,matrixA,matrixB);
-
-  
+	    time1 = bsp_time();
 	    matrixB.i = matrix.i;
 	    matrixB.j = matrix.j;
 	    matrixB.ReValue = matrix.ReValue;
 	    matrixB.NrNzElts = matrix.NrNzElts;
+	    
 
 	    matrixA = reorder_col_incr(matrix);
+	    if(s==0) printf("iteration: %d \t %ld \t %f \n",i+1,matrixB.NrNzElts,time1-time0);
+	    if(matrixB.NrNzElts == 0) break;
+	    time0 = time1;
     }
+
+    if(s==0) printf("total elapsed time \t %f\n",time1-time_start);
 
   	//if(s==0) print_matrix(s,matrix);
 
@@ -438,7 +447,7 @@ int main(int argc, char **argv){
  
     bsp_init(bsp_mcl, argc, argv);
    	P = atoi(argv[1]);
-   	sprintf(inputname,"%s.mtx",argv[2]);
+   	sprintf(inputname,"%s",argv[2]);
     if (P>bsp_nprocs()){
         printf("Not enough processors available:");
         printf(" %d wanted, %d available\n", P, bsp_nprocs());
