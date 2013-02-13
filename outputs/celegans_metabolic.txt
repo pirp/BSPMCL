@@ -1,0 +1,31 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/celegans_metabolic.mtx
+
+======= Sequential =======
+5.650000 
+5.010000 
+5.000000 
+4.880000 
+5.440000 
+5.020000 
+5.020000 
+4.830000 
+4.880000 
+4.860000 
+
+======= Parallel p=2 =======
+
+======= Parallel p=4 =======
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+

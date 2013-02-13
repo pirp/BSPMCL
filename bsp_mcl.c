@@ -5,7 +5,7 @@
 #include <Mondriaan.h>
 #include "sp_utilities.c"
 
-#define Niter 10
+#define Niter 15
 
 int P;
 char inputname[100];
@@ -417,7 +417,7 @@ void bsp_mcl(){
     time_start = bsp_time();
     time0 = time_start;
 
-    if(s==0) printf("iteration: %d \t %ld \n",0,matrixB.NrNzElts);
+    //if(s==0) printf("iteration: %d \t %ld \n",0,matrixB.NrNzElts);
 
     for(i=0;i<Niter;i++){
     	matrixA = normalize_rows(matrixA);
@@ -431,12 +431,12 @@ void bsp_mcl(){
 	    
 
 	    matrixA = reorder_col_incr(matrix);
-	    if(s==0) printf("iteration: %d \t %ld \t %f \n",i+1,matrixB.NrNzElts,time1-time0);
+	    //if(s==0) printf("iteration: %d \t %ld \t %f \n",i+1,matrixB.NrNzElts,time1-time0);
 	    if(matrixB.NrNzElts == 0) break;
 	    time0 = time1;
     }
 
-    if(s==0) printf("total elapsed time \t %f\n",time1-time_start);
+    if(s==0) printf("%f\n",time1-time_start);
 
   	//if(s==0) print_matrix(s,matrix);
 

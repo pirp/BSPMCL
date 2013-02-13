@@ -1,0 +1,41 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/email.mtx
+
+======= Sequential =======
+74.010000 
+71.610000 
+73.750000 
+73.680000 
+74.110000 
+73.950000 
+73.520000 
+77.040000 
+72.910000 
+72.690000 
+
+======= Parallel p=2 =======
+1.106489
+1.121992
+1.117531
+1.109156
+1.109829
+1.095623
+1.112439
+1.117377
+1.103261
+1.099099
+
+======= Parallel p=4 =======
+2.384240
+2.421464
+2.476504
+2.393257
+2.404605
+2.459705
+2.418859
+2.420606
+2.419837
+2.409281
+

@@ -1,0 +1,41 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/impcol_c.mtx
+
+======= Sequential =======
+2.780000 
+2.810000 
+2.810000 
+2.760000 
+2.730000 
+2.960000 
+2.790000 
+2.900000 
+3.030000 
+2.790000 
+
+======= Parallel p=2 =======
+0.253816
+0.263247
+0.255208
+0.253807
+0.261665
+0.252927
+0.251054
+0.329581
+0.256331
+0.258859
+
+======= Parallel p=4 =======
+0.713950
+0.771711
+0.742580
+0.820739
+0.720527
+0.658213
+0.717825
+0.796220
+0.701284
+0.664101
+

@@ -5,7 +5,7 @@
 #include "sp_utilities.c"
 #include <time.h>
 
-#define Niter 10
+#define Niter 15
 
 void print_matrix(struct sparsematrix matrix){
 	int k;
@@ -99,16 +99,16 @@ int main(int argc, char **argv){
 	time_start = clock();
 	time0 = time_start;
 
-	printf("iteration: %d \t %ld \n",k+1,matrix.NrNzElts);
+	//printf("iteration: %d \t %ld \n",k+1,matrix.NrNzElts);
 	
 	for(k=0;k<Niter;k++){
 		matrix = iteration(matrix,2,2);
 		time1 = clock();
-		printf("iteration: %d \t %ld \t %f \n",k+1,matrix.NrNzElts,(double) (time1-time0)/CLOCKS_PER_SEC);
+		//printf("iteration: %d \t %ld \t %f \n",k+1,matrix.NrNzElts,(double) (time1-time0)/CLOCKS_PER_SEC);
 		time0=time1;
 		if (matrix.NrNzElts ==0) break;
 	}
-	printf("total elapsed time \t %f \n",(double) (time1-time_start)/CLOCKS_PER_SEC);
+	printf("%f \n",(double) (time1-time_start)/CLOCKS_PER_SEC);
 	
 /*
 	char outputname[100];

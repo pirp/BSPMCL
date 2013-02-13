@@ -1,0 +1,41 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/nd_yeast.mtx
+
+======= Sequential =======
+0.480000 
+0.470000 
+0.470000 
+0.460000 
+0.470000 
+0.460000 
+0.470000 
+0.470000 
+0.460000 
+0.480000 
+
+======= Parallel p=2 =======
+1.380843
+1.361699
+1.353649
+1.379934
+1.369739
+1.358710
+1.363274
+1.368385
+1.363443
+1.374479
+
+======= Parallel p=4 =======
+2.437633
+2.486570
+2.443933
+2.477044
+2.489819
+2.505580
+2.503584
+2.493567
+2.542674
+2.501897
+

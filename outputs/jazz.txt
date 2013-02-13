@@ -1,0 +1,41 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/jazz.mtx
+
+======= Sequential =======
+0.470000 
+0.470000 
+0.490000 
+0.490000 
+0.480000 
+0.480000 
+0.480000 
+0.480000 
+0.490000 
+0.480000 
+
+======= Parallel p=2 =======
+0.148535
+0.142734
+0.146249
+0.143492
+0.136370
+0.160542
+0.140052
+0.137320
+0.136673
+0.138882
+
+======= Parallel p=4 =======
+0.183098
+0.174993
+0.203148
+0.168057
+0.175225
+0.189564
+0.177199
+0.189258
+0.175331
+0.182283
+
