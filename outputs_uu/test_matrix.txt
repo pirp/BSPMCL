@@ -1,0 +1,75 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/test_matrix.mtx
+
+======= Sequential =======
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+0.000000 
+
+======= Parallel p=1 =======
+
+======= Parallel p=2 =======
+0.011042
+0.007195
+0.007070
+0.007122
+0.007189
+0.007166
+0.007123
+0.007133
+0.007225
+0.007187
+
+======= Parallel p=4 =======
+Unable to distribute!
+0.030125
+Unable to distribute!
+0.013285
+Unable to distribute!
+0.013335
+Unable to distribute!
+0.013041
+Unable to distribute!
+0.020317
+Unable to distribute!
+0.017288
+Unable to distribute!
+0.013185
+Unable to distribute!
+0.026304
+Unable to distribute!
+0.021058
+Unable to distribute!
+0.018505
+
+======= Parallel p=8 =======
+Unable to distribute!
+0.042450
+Unable to distribute!
+0.026672
+Unable to distribute!
+0.029843
+Unable to distribute!
+0.025668
+Unable to distribute!
+0.022442
+Unable to distribute!
+0.142059
+Unable to distribute!
+0.022324
+Unable to distribute!
+0.021136
+Unable to distribute!
+0.021709
+Unable to distribute!
+0.026470
+

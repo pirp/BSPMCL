@@ -1,0 +1,96 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/arc130.mtx
+
+======= Sequential =======
+0.420000 
+0.430000 
+0.420000 
+0.420000 
+0.430000 
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/arc130.mtx
+
+======= Sequential =======
+0.420000 
+0.420000 
+0.420000 
+0.420000 
+0.420000 
+0.420000 
+0.430000 
+0.430000 
+0.420000 
+0.420000 
+
+======= Parallel p=1 =======
+0.007207
+0.006940
+0.006913
+0.007103
+0.006921
+0.006877
+0.006926
+0.006981
+0.007040
+0.006989
+
+======= Parallel p=2 =======
+0.182693
+0.189880
+0.182189
+0.188960
+0.187901
+0.188456
+0.183299
+0.186454
+0.182687
+0.181791
+
+======= Parallel p=4 =======
+1.543710
+0.414833
+0.440952
+0.419266
+0.425456
+0.421463
+0.424923
+0.425354
+0.426071
+0.423213
+
+======= Parallel p=8 =======
+Unable to distribute!
+Unable to distribute!
+0.663565
+Unable to distribute!
+Unable to distribute!
+0.558902
+Unable to distribute!
+Unable to distribute!
+0.556967
+Unable to distribute!
+Unable to distribute!
+0.543303
+Unable to distribute!
+Unable to distribute!
+0.522981
+Unable to distribute!
+Unable to distribute!
+0.555689
+Unable to distribute!
+Unable to distribute!
+0.567998
+Unable to distribute!
+Unable to distribute!
+0.553806
+Unable to distribute!
+Unable to distribute!
+0.577453
+Unable to distribute!
+Unable to distribute!
+0.564726
+

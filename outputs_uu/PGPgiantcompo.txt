@@ -1,0 +1,65 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/PGPgiantcompo.mtx
+
+======= Sequential =======
+397.240000 
+395.570000 
+395.600000 
+392.750000 
+396.080000 
+395.530000 
+392.490000 
+518.820000 
+470.810000 
+530.390000 
+
+======= Parallel p=1 =======
+5.568084
+5.126246
+5.102540
+5.114975
+5.099423
+5.128002
+5.109075
+5.104831
+5.097995
+5.115960
+
+======= Parallel p=2 =======
+18.027990
+17.981095
+19.221509
+17.841592
+19.121004
+19.340442
+17.783012
+19.148036
+17.869774
+19.196388
+
+======= Parallel p=4 =======
+26.009862
+26.900137
+25.904545
+25.932228
+26.507542
+25.954366
+26.023436
+26.205557
+26.257389
+26.648038
+
+======= Parallel p=8 =======
+31.751972
+33.014228
+32.392324
+30.908907
+31.165327
+32.037433
+31.294510
+31.587981
+31.996141
+30.968961
+

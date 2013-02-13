@@ -417,7 +417,7 @@ void bsp_mcl(){
     time_start = bsp_time();
     time0 = time_start;
 
-    //if(s==0) printf("iteration: %d \t %ld \n",0,matrixB.NrNzElts);
+    if(s==0) printf("iteration: %d \t %ld \n",0,matrixB.NrNzElts);
 
     for(i=0;i<Niter;i++){
     	matrixA = normalize_rows(matrixA);
@@ -431,7 +431,7 @@ void bsp_mcl(){
 	    
 
 	    matrixA = reorder_col_incr(matrix);
-	    //if(s==0) printf("iteration: %d \t %ld \t %f \n",i+1,matrixB.NrNzElts,time1-time0);
+	    if(s==0) printf("iteration: %d \t %ld \t %f \n",i+1,matrixB.NrNzElts,time1-time0);
 	    if(matrixB.NrNzElts == 0) break;
 	    time0 = time1;
     }
@@ -439,7 +439,13 @@ void bsp_mcl(){
     if(s==0) printf("%f\n",time1-time_start);
 
   	//if(s==0) print_matrix(s,matrix);
-
+	/*if(s==0){
+    	FILE *File;
+		if (!(File = fopen(strcat(inputname,".txt"), "w"))) printf("Unable to open output file!\n");
+		int k;
+		for(k=0;k<matrix.NrNzElts;k++) fprintf(File,"%ld %ld %f\n",matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
+		fclose(File);
+	}*/
     bsp_end();
 }
 

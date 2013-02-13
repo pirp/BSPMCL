@@ -1,0 +1,115 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/ash85.mtx
+
+======= Sequential =======
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+0.020000 
+
+======= Parallel p=1 =======
+0.005468
+0.005295
+0.005249
+0.005299
+0.005300
+0.005298
+0.005202
+0.005294
+0.005298
+0.005199
+
+======= Parallel p=2 =======
+0.046193
+0.044972
+0.046267
+0.046022
+0.045457
+0.046166
+0.049241
+0.046071
+0.045020
+0.045927
+
+======= Parallel p=4 =======
+0.100417
+0.097903
+0.097698
+0.096037
+0.095531
+0.096003
+0.097437
+0.098544
+0.098528
+0.097597
+
+======= Parallel p=8 =======
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.113140
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.101291
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.109708
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.099044
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.095545
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.108558
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.097163
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.096834
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.098466
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+Unable to distribute!
+0.096473
+

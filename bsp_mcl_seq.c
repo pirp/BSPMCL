@@ -110,9 +110,9 @@ int main(int argc, char **argv){
 	}
 	printf("%f \n",(double) (time1-time_start)/CLOCKS_PER_SEC);
 	
-/*
+
 	char outputname[100];
-	sprintf(outputname,"output_%s.txt",argv[1]);
+	sprintf(outputname,"%s.txt",argv[1]);
 
 	if (!(File = fopen(outputname, "w")))
 	{
@@ -122,7 +122,7 @@ int main(int argc, char **argv){
 
 	for(k=0;k<matrix.NrNzElts;k++) fprintf(File,"%ld %ld %f\n",matrix.i[k]+1,matrix.j[k]+1,matrix.ReValue[k]);
 	fclose(File);
-	*/
+	
 }
 
 

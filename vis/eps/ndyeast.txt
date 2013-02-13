@@ -1,0 +1,17 @@
+iteration: 0 	 2277 
+iteration: 1 	 4170 	 0.132388 
+iteration: 2 	 4368 	 0.100466 
+iteration: 3 	 4439 	 0.101276 
+iteration: 4 	 4292 	 0.092529 
+iteration: 5 	 4285 	 0.090088 
+iteration: 6 	 2988 	 0.091455 
+iteration: 7 	 1648 	 0.089545 
+iteration: 8 	 1001 	 0.094406 
+iteration: 9 	 592 	 0.087992 
+iteration: 10 	 490 	 0.086266 
+iteration: 11 	 374 	 0.085321 
+iteration: 12 	 358 	 0.084463 
+iteration: 13 	 351 	 0.084383 
+iteration: 14 	 349 	 0.085710 
+iteration: 15 	 342 	 0.085134 
+1.391425

@@ -1,0 +1,75 @@
+gcc -O3 -o bsp_mcl bsp_mcl.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -DMCBSP_COMPATIBILITY_MODE BSPedupack1.01/compat-libmcbsp1.0.1.a -pthread -lm -lrt -Wno-unused-result
+gcc -O3 -o bsp_mcl_seq bsp_mcl_seq.c -IMondriaan3.11/src/include -LMondriaan3.11/src/lib -lMondriaan3 -lm
+
+Working with matrices/bfw62a.mtx
+
+======= Sequential =======
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+0.060000 
+
+======= Parallel p=1 =======
+0.005050
+0.004915
+0.004950
+0.004903
+0.004899
+0.004903
+0.004901
+0.004952
+0.004900
+0.004901
+
+======= Parallel p=2 =======
+0.067895
+0.065661
+0.064802
+0.065532
+0.064989
+0.064936
+0.063921
+0.065560
+0.063748
+0.064264
+
+======= Parallel p=4 =======
+0.168217
+0.167727
+0.168691
+0.165836
+0.165737
+0.165898
+0.170830
+0.160489
+0.161670
+0.168885
+
+======= Parallel p=8 =======
+Unable to distribute!
+0.253982
+Unable to distribute!
+0.239179
+Unable to distribute!
+0.264761
+Unable to distribute!
+0.236176
+Unable to distribute!
+0.237163
+Unable to distribute!
+0.238266
+Unable to distribute!
+0.236282
+Unable to distribute!
+0.243482
+Unable to distribute!
+0.260845
+Unable to distribute!
+0.259771
+
